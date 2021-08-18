@@ -2,21 +2,16 @@
 ## Classifying Nintendo 64/PlayStation Textures with Convolutional Neural Networks
 
 ### PROJECT DESCRIPTION
-- Attempt to use **Convolutional Neural Networks** in order to classify image
-textures from **Nintendo 64 games** by use in game development or game
-modding
+- Attempt to use **Convolutional Neural Networks** in order to classify image textures from **Nintendo 64 games** by use in game development or game modding
 - Images are taken from popular modding resource [smwcentral.net](https://www.smwcentral.net/)
-- Data was **hand labeled** into what I consider to be the most useful categories
-based on personal experience
-- Three **CNN models** were successfully trained and compaired based on
-accuracy
+- Data was **hand labeled** into what I consider to be the most useful categories based on personal experience
+- Three **CNN models** were successfully trained and compaired based on accuracy
 
 ### PROJECT SCOPE
 - **Pre-capstone:** Finding data, data cleaning
 - **Day One:** Labeling, image generation, baseline model prelim
 - **Day Two:** Labeling, baseline model work, building other models, callbacks
-- **Day Three:** Tuning hyperparameters, refining callbacks, Google CoLab
-setup
+- **Day Three:** Tuning hyperparameters, refining callbacks, Google CoLab setup
 - **Day Four:** Generating graphs and visuals, presentation work
 - **Day Five:** Presentation refinement and rehearsal, Github
 
@@ -91,15 +86,13 @@ setup
 - Differences in artistic style between games
 - Differences in texture utility between games
 - Low resolution prevented the use of some CNN models (Inception)
-- Small set of images limits amout of epochs, steps per epochs and validation
-steps
+- Small set of images limits amout of epochs, steps per epochs and validation steps
 
 ### MODEL SUMMARIES
 - Used **simple sequential model** with 2 convolutional layers as baseline
 - Used **deeper sequential model** with more layers as intermediate
 - Used **ResNet 34** model as best performing model
-- Attemped an **Inception** model, but did not work with the low resolution
-RGBA images
+- Attemped an **Inception** model, but did not work with the low resolution RGBA images
 
 - CNN Diagram
 
