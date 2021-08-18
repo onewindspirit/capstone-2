@@ -24,42 +24,9 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
 from pipeline import ImagePipeline
 from split_train_set import make_holdout_group
-
-def list_shapes(data):
-    '''
-    Returns a dictionary of the amount of images that share shapes in a given dataset. 
-    '''
-    shapes={}
-    for img in data:
-        key = f'{img.shape[0]} x {img.shape[1]}'
-        if key not in shapes:
-            shapes[key] = 0
-        shapes[key] += 1
-    return sorted(shapes.items(),key=operator.itemgetter(1),reverse=True)
-
-def filter_data(data,min_res=32,only_squares=True):#OLD,may not use
-    '''
-    Takes a set of image labels and returns a resized version based on minimum resolution and whether or not the images are square.
-    
-    Inputs:
-        sub_dir: subdirectory of image labels to look at
-        min_res: minimum hight or width for the data. Will remove all images with a smaller resolution and resize anything bigger to match.
-        only_squares: if True, only includes images that have a square resolution in the final set
-    Outputs:
-        imgs: filtered and resized images
-    '''
-    imgs = []
-    if only_squares == True:
-        for img in data:
-            if img.shape[0] == img.shape[1]:
-                if img.shape[0]>=min_res & img.shape[1]>=min_res:
-                    imgs.append(img)
-    else:
-        for img in data:
-            if img.shape[0]>=min_res & img.shape[1]>=min_res:
-                imgs.append(img)
-            
-    return imgs
+from prelim_eda import list_shapes, filter_data
+from image_plot import image_plot
+from plt_cnfs import build_cnf_matrix,plot_confusion_matrix
 
 def img_gen_train(train_dir,validation_dir,test_dir,target_size=(32,32),color_mode='rgba',class_mode='categorical',batch_size=32):
 
@@ -204,97 +171,6 @@ def model_compile_fit(model,train_generator,validation_generator,test_generator,
 
     return history,predictions
 
-def image_plot(rows,batch,predictions,features,save=False,save_dir='',cols=32,figsize=(4,4)):  
-    """ 
-    Plots images with thier predicted class and actual class
-    Used after model has been fit to see results of test data
-    
-    Parameters: 
-        rows (int): number of rows for the images displayed
-        batch (ImageDataGenerator): test batch of pictures that will be predicted in model
-        model : the model training images have been trained on to be used to predict test images
-        cols (int) : number of columns displayed ( set to batch size )
-        features (list): list of features to show
-    
-    Returns: 
-        plot: Plot of images with their predicted class and their actual class
-    """
-    fig, axs = plt.subplots(rows,cols,figsize=(cols * figsize[0],rows * figsize[1]))
-
-    for i in range(rows):
-        images, labels = next(batch)
-        for j, pic in enumerate(images):
-            title = 'Predicted:' + ' ' + features[list(predictions[j]).index(predictions[j].max())] + ' ' + '\n' + 'Actual:' + ' ' + features[list(labels[j]).index(1)] + '\n' + 'Confidence:' + str(predictions[j].max().round(2))
-            if rows > 1:
-                axs[i,j].imshow(pic.astype('uint8'))
-                axs[i,j].set_title(title,color='blue')
-                axs[i,j].axis('off')
-                if features[list(predictions[j]).index(predictions[j].max())] != features[list(labels[j]).index(1)]:
-                  axs[i,j].set_title(title,color='red')
-            else:
-                axs[j].imshow(pic.astype('uint8'))
-                axs[j].set_title(title,color='blue')
-                if features[list(predictions[j]).index(predictions[j].max())] != features[list(labels[j]).index(1)]:
-                  axs[j].set_title(title,color='red')
-                axs[j].axis('off')
-
-    plt.tight_layout()
-    plt.show()
-
-    if save == True:
-      plt.savefig(save_dir,dpi=150,transparent=True)
-
-def build_cnf_matrix(predictions,generator):
-  '''
-  Returns a CMF matrix from predicted and actual labels for a prediction imnage set
-  '''
-
-  y_pred = np.argmax(predictions, axis=1)
-
-  y_actual_lst = [(np.argmax(generator[i][1], axis = 1)) for i in range(len(generator.labels)//generator.batch_size + 1)]
-  y_actual_arr = np.append(np.stack(y_actual_lst[:-1]).flatten(),y_actual_lst[-1])
-
-  return np.round(confusion_matrix(y_actual_arr, y_pred),2)
-
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues,
-                          figsize=(10,10)):
-  """
-  This function prints and plots the confusion matrix.
-  Normalization can be applied by setting `normalize=True`.
-  """
-  fig, ax = plt.subplots(figsize=figsize)
-
-  if normalize:
-      cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-      cm = cm * 100
-      print("\nNormalized confusion matrix")
-  else:
-      print('\nConfusion matrix, without normalization')
-  print(cm)
-  print ()
-
-  plt.imshow(cm, interpolation='nearest', cmap=cmap)
-  plt.title(title)
-  plt.colorbar()
-  tick_marks = np.arange(len(classes))
-  plt.xticks(tick_marks, classes, rotation=90)
-  plt.yticks(tick_marks, classes)
-
-  fmt = '.0f' if normalize else 'd'
-  thresh = cm.max() / 2.
-  for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-      plt.text(j, i, format(cm[i, j], fmt),
-                horizontalalignment="center",
-                color="white" if cm[i, j] > thresh else "black")
-
-  plt.tight_layout()
-  plt.ylabel('True label')
-  plt.xlabel('Predicted label')
-  plt.show()
-
 if __name__ == '__main__':
     
     train_dir = '../data/textures/train'
@@ -366,16 +242,19 @@ if __name__ == '__main__':
 
     train_generator,validation_generator,test_generator = img_gen_train(train_dir,validation_dir,test_dir,target_size=(img_res,img_res),color_mode='rgba')
 
-    #baseline_model = build_baseline_model(n_features,input_shape=[img_res,img_res,4])
+    baseline_model = build_baseline_model(n_features,input_shape=[img_res,img_res,4])
+    baseline_model.summary()
 
-    #baseline_history,baseline_predictions = model_compile_fit(baseline_model,train_generator,validation_generator,test_generator,baseline_callbacks,n_epoch_steps=80,n_epochs=10,validation_steps=10)
 
-    #seq_model = build_sequential_model(n_features,input_shape=[img_res,img_res,4])
-    #seq_model.summary()
+    baseline_history,baseline_predictions = model_compile_fit(baseline_model,train_generator,validation_generator,test_generator,baseline_callbacks,n_epoch_steps=80,n_epochs=10,validation_steps=10)
 
-    #seq_history,seq_predictions = model_compile_fit(seq_model,train_generator,validation_generator,seq_callbacks,n_epoch_steps=80,n_epochs=10,validation_steps=10)
+    seq_model = build_sequential_model(n_features,input_shape=[img_res,img_res,4])
+    seq_model.summary()
+
+    seq_history,seq_predictions = model_compile_fit(seq_model,train_generator,validation_generator,seq_callbacks,n_epoch_steps=80,n_epochs=10,validation_steps=10)
 
     resnet_model = build_resnet(n_features)
+    resnet_model.summary()
 
     resnet_history,resnet_predictions = model_compile_fit(resnet_model,train_generator,validation_generator,test_generator,resnet_callbacks,n_epoch_steps=80,n_epochs=10,validation_steps=10)
 
